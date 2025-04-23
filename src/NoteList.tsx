@@ -1,18 +1,38 @@
-import { useState } from "react";
-import { Button, Col, Form, Row, Stack } from "react-bootstrap";
+import { useMemo, useState } from "react";
+import { Button, Card, Col, Form, Row, Stack } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import ReactSelect from "react-select";
 import { Tag } from "./App";
+import styles from "./NoteList.module.css"
+
+type SimplifiedNote = {
+    id: string
+    title: string
+    tags: Tag[]
+}
 
 type NoteListProps = {
     availableTags: Tag[]
+    notes: SimplifiedNote[]
 }
 
-export function NoteList( {availableTags}: NoteListProps ) {
+export function NoteList( {availableTags, notes}: NoteListProps ) {
     const [selectedTags, setSelectedTags] = useState<Tag[]>([])
+    const [title, setTitle] = useState("")
+
+    const filteredNotes = useMemo(() => {
+        return notes.filter(note => {
+            return (
+                (title === "" || note.title.toLowerCase().includes(title.toLowerCase())) &&
+                (selectedTags.length === 0 || selectedTags.every(tag => note.tags.some(noteTag => noteTag.id === tag.id)))
+            )
+        })
+    }, [title, selectedTags, notes])   
+
+
     return (
         <>
-            <Row>
+            <Row className="align-items-center mb-4">
                 <Col><h1>Notes</h1></Col>
                 <Col xs="auto">
                     <Stack gap={2} direction="horizontal">
@@ -28,7 +48,7 @@ export function NoteList( {availableTags}: NoteListProps ) {
                     <Col>
                         <Form.Group controlId="title">
                             <Form.Label>Title</Form.Label>
-                            <Form.Control type="text" />
+                            <Form.Control type="text" value={title} onChange={e => setTitle(e.target.value)}/>
                         </Form.Group>
                     </Col>
                     <Col>
@@ -51,6 +71,26 @@ export function NoteList( {availableTags}: NoteListProps ) {
                     </Col>
                 </Row>
             </Form>
+            <Row xs={1} md={2} lg={3} xl={4} className="g-3">
+                {filteredNotes.map(note => (
+                    <Col key={note.id}>
+                        <NoteCard id={note.id} title={note.title} tags={note.tags}/>
+                    </Col>
+                ))}
+            </Row>
         </>
     );
 } 
+
+function NoteCard({ id, title, tags}: SimplifiedNote) {
+    return(
+        <Card as={Link} to={`/${id}`} className={`h-100 text-reset text-decoration-none ${styles.card}`}>
+            <Card.Body>
+                <Stack gap={2} className="align-items-center justify-content-center h-100">
+
+                </Stack>
+
+            </Card.Body>
+        </Card>
+    )
+}
